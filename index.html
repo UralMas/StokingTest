@@ -1,0 +1,15 @@
+<html>
+<head></head>
+<body>
+	<script>
+		let conn = new WebSocket('ws://localhost:2345?token=78632876423876');
+		conn.onmessage = function(e) {
+			console.log('Response:' + e.data);
+		};
+		conn.onopen = function(e) {
+			console.log("Connection established!");
+			conn.send('Hey!');
+		};
+	</script>
+</body>
+</html>
