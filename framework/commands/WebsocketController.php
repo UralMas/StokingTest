@@ -35,16 +35,19 @@ class WebsocketController extends Controller
 
         // Обработка сообщений только от тех пользователей, которые передали валидный токен
         $wsWorker->onMessage = function ($connection, $data) {
-            if ($this->hasConnection($connection->id)) {
+            $currentConnection = $this->getConnection($connection->id);
+
+            if (!is_null($currentConnection) && $currentConnection->isValidConnection()) {
                 echo "Message from connection {$connection->id}: $data" . PHP_EOL;
-                $connection->send('Hello ' . $data);
             }
         };
 
         // При дисконнекте надо удалить коннект из списка активных
         $wsWorker->onClose = function ($connection) {
-            if ($this->hasConnection($connection->id)) {
-                unset($this->_connections[$connection->id]);
+            $currentConnection = $this->getConnection($connection->id);
+
+            if (!is_null($currentConnection) && $currentConnection->isValidConnection()) {
+                $currentConnection->close();
                 echo "Connection closed: {$connection->id}" . PHP_EOL;
             }
         };
@@ -56,11 +59,5 @@ class WebsocketController extends Controller
     private function getConnection(int $id): ?WebsocketConnection
     {
         return $this->_connections[$id] ?? null;
-    }
-
-    // Проверка существования валидного коннекта по ID
-    private function hasConnection(int $id): bool
-    {
-        return !is_null($this->getConnection($id));
     }
 }

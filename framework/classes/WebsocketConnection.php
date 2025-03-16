@@ -2,15 +2,20 @@
 
 namespace app\classes;
 
+use app\models\Users;
 use Workerman\Connection\TcpConnection;
 
 class WebsocketConnection
 {
     private ?TcpConnection $connection;
 
+    private ?Users $user;
+
     private ?string $token;
 
     private ?string $userAgent;
+    private ?string $createDate;
+    private ?string $closedDate = null;
 
     public function __construct(TcpConnection $connection, string $request, ?string $token)
     {
@@ -20,13 +25,15 @@ class WebsocketConnection
             return;
         }
 
-        $this->connection = $connection;
+        $this->createDate = date('Y-m-d H:i:s');
         $this->token = $token;
+        $this->connection = $connection;
+        $this->user = $user;
 
         $requestData = preg_split("/[\r\n]/", $request, -1, PREG_SPLIT_NO_EMPTY);
 
         foreach ($requestData as $requestDataLine) {
-            if (str_starts_with($requestDataLine, 'User-Agent:')) {
+            if (str_starts_with($requestDataLine, 'User-Agent: ')) {
                 $this->userAgent = substr($requestDataLine, strpos($requestDataLine, ' '));
                 break;
             }
@@ -36,7 +43,7 @@ class WebsocketConnection
     // Проверка валидности подключения
     public function isValidConnection(): bool
     {
-        return !is_null($this->connection);
+        return !is_null($this->connection) && empty($this->closedDate);
     }
 
     // Формирование данных для сохранения
@@ -44,11 +51,19 @@ class WebsocketConnection
     {
         return !is_null($this->connection)
             ? [
-                'id' => $this->connection->id,
+                'create_date' => $this->createDate,
                 'token' => $this->token,
+                'user_id' => $this->user->getId(),
                 'user_agent' => $this->userAgent,
+                'closed_date' => $this->closedDate,
             ]
             : null;
+    }
+
+    // Формирование данных для сохранения
+    public function close(): void
+    {
+        $this->closedDate = date('Y-m-d H:i:s');
     }
 
     // Формирование строки данных законнекченного пользователя
@@ -64,8 +79,8 @@ class WebsocketConnection
     }
 
     // Поиск пользвателя по токену
-    private static function getUser(?string $token)
+    private static function getUser(?string $token): ?Users
     {
-        return !is_null($token) ? $token : null;
+        return !is_null($token) ? Users::findByToken($token) : null;
     }
 }
