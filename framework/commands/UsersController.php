@@ -30,6 +30,6 @@ class UsersController extends Controller
             throw new Exception($user->getErrorSummary(true)[0]);
         }
 
-        print_r("User {$params[1]} successfully created");
+        print_r("User {$params[1]} successfully created. Token: {$user->getToken()}\n");
     }
 }

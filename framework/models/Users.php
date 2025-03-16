@@ -44,6 +44,11 @@ class Users extends ActiveRecord
         return $this->attributes['id'];
     }
 
+    public function getToken(): string
+    {
+        return $this->attributes['token'];
+    }
+
     // Поиск пользвателя по токену
     public static function findByToken(string $token): self
     {
