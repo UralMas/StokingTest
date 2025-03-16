@@ -38,6 +38,7 @@ class WebsocketController extends Controller
             $currentConnection = $this->getConnection($connection->id);
 
             if (!is_null($currentConnection) && $currentConnection->isValidConnection()) {
+                $currentConnection->saveMessage($data);
                 echo "Message from connection {$connection->id}: $data" . PHP_EOL;
             }
         };

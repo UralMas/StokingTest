@@ -4,17 +4,18 @@ namespace app\models;
 
 use Yii;
 use yii\db\ActiveRecord;
+use yii\db\Exception;
 
 // Таблица пользователей
 class Users extends ActiveRecord
 {
     public const SCENARIO_REGISTER = 'register';
+    public const SCENARIO_CONNECT = 'connect';
 
     private int $id;
     private string $login;
     private string $password;
     private string $token;
-    private ?string $last_ip;
     private ?string $last_datetime;
 
     public static function tableName(): string
@@ -25,14 +26,16 @@ class Users extends ActiveRecord
     public function scenarios(): array
     {
         $scenarios = parent::scenarios();
-        $scenarios[self::SCENARIO_REGISTER] = ['username', 'password', 'token'];
+        $scenarios[self::SCENARIO_REGISTER] = ['login', 'password', 'token'];
+        $scenarios[self::SCENARIO_CONNECT] = ['last_datetime'];
         return $scenarios;
     }
 
     public function rules(): array
     {
         return [
-            [['login', 'password', 'token'], 'required'],
+            [['login', 'password', 'token'], 'required', 'on' => self::SCENARIO_REGISTER],
+            [['last_datetime'], 'required', 'on' => self::SCENARIO_CONNECT],
         ];
     }
 
@@ -66,15 +69,29 @@ class Users extends ActiveRecord
      */
     public static function register(string $login, string $password): self
     {
-        $user = new Users();
+        $user = new self();
+        $user->scenario = self::SCENARIO_REGISTER;
         $user->attributes = [
             'login' => $login,
             'password' => $password,
-            'token' => sha1("$login:$password")
+            'token' => sha1("$login:$password"),
         ];
 
         $user->save();
 
         return $user;
+    }
+
+    /**
+     * Подключение поьзвателя к вебсокету
+     * @throws Exception
+     */
+    public function connectToWebsocket(): void
+    {
+        $this->scenario = self::SCENARIO_CONNECT;
+        $this->attributes = [
+            'last_datetime' => date('Y-m-d H:i:s'),
+        ];
+        $this->save();
     }
 }

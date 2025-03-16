@@ -2,8 +2,10 @@
 
 namespace app\classes;
 
+use app\models\Messages;
 use app\models\Users;
 use Workerman\Connection\TcpConnection;
+use yii\db\Exception;
 
 class WebsocketConnection
 {
@@ -17,6 +19,9 @@ class WebsocketConnection
     private ?string $createDate;
     private ?string $closedDate = null;
 
+    /**
+     * @throws Exception
+     */
     public function __construct(TcpConnection $connection, string $request, ?string $token)
     {
         $user = self::getUser($token);
@@ -38,6 +43,8 @@ class WebsocketConnection
                 break;
             }
         }
+
+        $this->user->connectToWebsocket();
     }
 
     // Проверка валидности подключения
@@ -76,6 +83,19 @@ class WebsocketConnection
         }
 
         return implode(';', $userData);
+    }
+
+    /**
+     * Сохранение переданного сообщения
+     * @throws Exception
+     */
+    public function saveMessage(string $message): void
+    {
+        $message = Messages::create($this->user->getId(), $message);
+
+        foreach ($message->getErrors() as $error) {
+            echo $error . PHP_EOL;
+        }
     }
 
     // Поиск пользвателя по токену
