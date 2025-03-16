@@ -4,6 +4,7 @@ namespace app\commands;
 
 use app\classes\WebsocketConnection;
 use Workerman\Connection\TcpConnection;
+use Workerman\Timer;
 use yii\console\Controller;
 use Workerman\Worker;
 
@@ -51,6 +52,17 @@ class WebsocketController extends Controller
                 $currentConnection->close();
                 echo "Connection closed: {$connection->id}" . PHP_EOL;
             }
+        };
+
+        // Ping до коннекта, чтобы не прервалось соединение
+        $wsWorker->onWorkerStart = function($wsWorker) {
+            $timeInterval = 10;
+
+            Timer::add($timeInterval, function() use ($wsWorker) {
+                foreach($this->_connections as $connection) {
+                    $connection->connection->send(pack('H*', '890400000000'), true);
+                }
+            });
         };
 
         Worker::runAll();

@@ -9,7 +9,7 @@ use yii\db\Exception;
 
 class WebsocketConnection
 {
-    private ?TcpConnection $connection;
+    public ?TcpConnection $connection;
 
     private ?Users $user;
 
