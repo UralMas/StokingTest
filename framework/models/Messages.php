@@ -12,7 +12,7 @@ class Messages extends ActiveRecord
     private int $id;
     private int $user_id;
     private string $text;
-    private ?string $created_at;
+    private string $created_at;
 
     public static function tableName(): string
     {
