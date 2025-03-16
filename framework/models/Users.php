@@ -2,6 +2,7 @@
 
 namespace app\models;
 
+use Yii;
 use yii\db\ActiveRecord;
 
 // Таблица пользователей
@@ -43,7 +44,14 @@ class Users extends ActiveRecord
     // Поиск пользвателя по токену
     public static function findByToken(string $token): self
     {
-        return self::findOne(['token' => $token]);
+        $user = Yii::$app->cache->get($token);
+
+        if (!$user) {
+            $user = self::findOne(['token' => $token]);
+            Yii::$app->cache->set($token, $user, 60 * 60);
+        }
+
+        return $user;
     }
 
     // Определение - существует ли пользователь с таким же логином
